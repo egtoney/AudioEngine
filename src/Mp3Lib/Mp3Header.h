@@ -8,6 +8,10 @@
 #ifndef MP3HEADER_H_
 #define MP3HEADER_H_
 
+/*
+ * BIT MASKS
+ */
+
 #define FRAMESYNC_MASK 		0xFFE0	// Framesync									bytes 1-4
 #define MPEG_VERSION_MASK 	0x18	// MPEG version id								bytes 3-4
 #define LAYER_MASK 			0x6		// Layer										byte  4
@@ -21,6 +25,16 @@
 #define COPYRIGHT_MASK 		0x8		// Copyright									byte  8
 #define ORIGINAL_MASK 		0x4		// Original										byte  8
 #define EMPHASIS_MASK 		0x3		// Emphasis										byte  8
+
+/*
+ * SELECTORS
+ */
+
+// Channel
+#define STEREO_SEL			0x0
+#define JOINT_STEREO_SEL	0x1
+#define DUAL_CHANNEL_SEL	0x2
+#define MONO_SEL			0x3
 
 // byte		0			1			2			3
 // data =	ffffffff,	fffvvllp,	bbbbssar,	ccmmcoee
@@ -46,7 +60,8 @@ public:
 	Mp3Header();
 	Mp3Header(Mp3HeaderData d);
 	~Mp3Header();
-	void updateData(Mp3HeaderData d);
+	void updateDataFields(Mp3HeaderData d);
+	bool isMono();
 };
 
 #endif /* MP3HEADER_H_ */

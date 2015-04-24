@@ -5,12 +5,15 @@
  *      Author: ethan
  */
 
-#include "Mp3Id3Tag2.h"
+#include "../Mp3Lib/Mp3Id3Tag2.h"
 
 using namespace std;
 
 Mp3Id3Tag2::Mp3Id3Tag2(){
-
+	version = 0;
+	revision = 0;
+	flags = 0;
+	size = 0;
 }
 
 Mp3Id3Tag2::Mp3Id3Tag2(Mp3Id3Tag2Data data){

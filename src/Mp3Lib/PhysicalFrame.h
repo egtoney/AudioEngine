@@ -8,18 +8,20 @@
 #ifndef PHYSICALFRAME_H_
 #define PHYSICALFRAME_H_
 
-#include "Mp3Header.h"
+#include "../Mp3Lib/Mp3Header.h"
+#include <vector>
 
 using namespace std;
 
 class PhysicalFrame {
 public:
 	Mp3Header* header;
+	Mp3SideInfo* side_info;
 	unsigned char* data;
 	int frame_size;
 
 	PhysicalFrame();
-	PhysicalFrame(Mp3Header* header);
+	PhysicalFrame(Mp3Header* header, Mp3SideInfo side_info);
 	virtual ~PhysicalFrame();
 	void setData(vector<unsigned char> data);
 };

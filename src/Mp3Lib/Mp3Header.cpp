@@ -5,7 +5,9 @@
  *      Author: ethan
  */
 
-#include "Mp3Header.h"
+#include "../Mp3Lib/Mp3Header.h"
+
+#include <iostream>
 
 using namespace std;
 
@@ -25,15 +27,22 @@ Mp3Header::Mp3Header(){
 }
 
 Mp3Header::Mp3Header(Mp3HeaderData data){
-	updateData(data);
+	updateDataFields(data);
 }
 
 Mp3Header::~Mp3Header(){
 
 }
 
-void Mp3Header::updateData(Mp3HeaderData data){
+void Mp3Header::updateDataFields(Mp3HeaderData data){
 	char b, c, d;
+
+	cout << "New Data: ";
+
+	for(int i=0 ; i<10 ; i++)
+		cout << (int) data.data[i] << "\t";
+
+	cout << endl;
 
 	b = data.data[1];
 	c = data.data[2];
@@ -56,4 +65,8 @@ void Mp3Header::updateData(Mp3HeaderData data){
 	copyright = (d & COPYRIGHT_MASK) >> 3;
 	original = (d & ORIGINAL_MASK) >> 2;
 	emphasis = (d & EMPHASIS_MASK);
+}
+
+bool Mp3Header::isMono(){
+	return (channel & MONO_SEL) == MONO_SEL;
 }

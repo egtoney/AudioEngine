@@ -5,22 +5,27 @@
  *      Author: ethan
  */
 
+#include "PhysicalFrame.h"
+
 #include <vector>
 #include <string.h>
-#include "Mp3Header.h"
-#include "PhysicalFrame.h"
+
+#include "../Mp3Lib/Mp3Header.h"
 
 using namespace std;
 
 PhysicalFrame::PhysicalFrame() {
 	frame_size = 0;
 	data = NULL;
+	header = NULL;
+	side_info = NULL;
 }
 
-PhysicalFrame::PhysicalFrame(Mp3Header* head) {
+PhysicalFrame::PhysicalFrame(Mp3Header* head, Mp3SideInfo side) {
 	frame_size = 0;
 	data = NULL;
 	header = head;
+	side_info = side;
 }
 
 PhysicalFrame::~PhysicalFrame() {

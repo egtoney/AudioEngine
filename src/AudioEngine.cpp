@@ -10,9 +10,10 @@
 #include <iostream>
 #include <stdio.h>
 #include <vector>
-#include "Mp3Header.h"
-#include "Mp3Id3Tag2.h"
-#include "PhysicalFrame.h"
+
+#include "Mp3Lib/Mp3Header.h"
+#include "Mp3Lib/Mp3Id3Tag2.h"
+#include "Mp3Lib/PhysicalFrame.h"
 
 using namespace std;
 
@@ -22,6 +23,7 @@ using namespace std;
  * 		http://www.mp3-tech.org/programmer/frame_header.html
  * 		http://cboard.cprogramming.com/c-programming/54179-reading-mp3-header.html
  * 		http://id3.org/id3v2.3.0
+ * 		http://www.datavoyage.com/mpgscript/mpeghdr.htm
  *
  * Read physical frames...
  * 		look for, FF FB 78 64
@@ -60,18 +62,6 @@ int bitrates[] = {
     BITRATEBAD, BITRATEBAD, BITRATEBAD, BITRATEBAD, BITRATEBAD
 };
 
-//
-//// Id tag at end of file
-//typedef struct{
-//	char    tagid  [ 3];    //0-2     3  Tag identifier. Must contain "TAG" string if Tag is valid.
-//	char    name   [30];    //3-32   30  Song Name
-//	char    artist [30];    //33-62  30  Artist
-//	char    album  [30];    //63-92  30  Album
-//	int     year   :32 ;    //93-96   4  Year
-//	char    comment[30];    //97-126 30  Comment
-//	char    genre  : 8 ;    //127  1  Genre
-//} Mp3Id3Tag2;
-
 bool framesyncOn(unsigned char c[2]){
 	int a,b;
 	a = ((int) c[0]) << 8;
@@ -81,7 +71,7 @@ bool framesyncOn(unsigned char c[2]){
 
 	//cout << "framesync " << r << " ?= " << FRAMESYNC_MASK << endl;
 
-	return r == FRAMESYNC_MASK;
+	return (r == FRAMESYNC_MASK);
 }
 
 vector<PhysicalFrame*> readMP3File(FILE *f){
@@ -114,10 +104,35 @@ vector<PhysicalFrame*> readMP3File(FILE *f){
 		}
 
 		//init the header
-		Mp3Header* h = new Mp3Header(header_data);
+		Mp3Header* header = new Mp3Header(header_data);
+
+		//init the side_info;
+		Mp3SideInfo* side_info = NULL;
+
+		//read in the side info
+		if( header->isMono() ){ //read 17 bytes
+			MONO_DATA side_info_data;
+
+			//read side info
+			if(fread(&side_info_data, 1, sizeof(side_info_data), f) <1 ){//returns -1 if eof
+				break;
+			}
+
+			side_info = new Mp3SideInfo(side_info_data);
+
+		}else{ //read 32 bytes
+			OTHER_DATA side_info_data;
+
+			//read side info
+			if(fread(&side_info_data, 1, sizeof(side_info_data), f) <1 ){//returns -1 if eof
+				break;
+			}
+
+			side_info = new Mp3SideInfo(side_info_data);
+		}
 
 		//init the physical frame
-		PhysicalFrame* frame = new PhysicalFrame(h);
+		PhysicalFrame* frame = new PhysicalFrame(header, side_info);
 
 		//move past the current header
 		fseek(f, sizeof(header_data), SEEK_CUR);
@@ -131,19 +146,22 @@ vector<PhysicalFrame*> readMP3File(FILE *f){
 			break;
 
 		//till it finds another header or reaches the end of file
-		while( !framesyncOn(curr_data) ){
+		while( framesyncOn(curr_data) == false ){
+
 			//push first byte to past_data since it isn't header data
 			past_data.push_back(curr_data[0]);
 
+			//clear curr_data
+			curr_data[0] = 0;
+			curr_data[1] = 0;
+
 			//back up one byte
-			fseek(f, -1, SEEK_CUR);
+			fseek(f, 1, SEEK_CUR);
 			//read next two bytes
 			if(fread(curr_data, 1, sizeof(curr_data), f) <1 ){//returns -1 if eof
 				reading = false;
 				break;
 			}
-			//move forward two bytes
-			fseek(f, 2, SEEK_CUR);
 		}
 
 		//push data to header
