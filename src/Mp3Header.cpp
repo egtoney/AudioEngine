@@ -25,9 +25,35 @@ Mp3Header::Mp3Header(){
 }
 
 Mp3Header::Mp3Header(Mp3HeaderData data){
-
+	updateData(data);
 }
 
 Mp3Header::~Mp3Header(){
 
+}
+
+void Mp3Header::updateData(Mp3HeaderData data){
+	char b, c, d;
+
+	b = data.data[1];
+	c = data.data[2];
+	d = data.data[3];
+
+	// byte b
+	mpegid = (b & MPEG_VERSION_MASK) >> 3;
+	layer = (b & LAYER_MASK) >> 1;
+	protectbit = (b & CRC_PROTECTION_MASK);
+
+	// byte c
+	bitrateindx = (c & BITRATE_INDEX_MASK) >> 4;
+	samplefreq = (c & SAMPLE_RATE_MASK) >> 2;
+	paddingbit = (c & PADDING_MASK) >> 1;
+	privatebit = (c & PRIVATE_MASK);
+
+	// byte d
+	channel = (d & CHANNEL_MASK) >> 6;
+	modeext = (d & MODE_EXTENSION_MASK) >> 4;
+	copyright = (d & COPYRIGHT_MASK) >> 3;
+	original = (d & ORIGINAL_MASK) >> 2;
+	emphasis = (d & EMPHASIS_MASK);
 }

@@ -9,8 +9,10 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <vector>
 #include "Mp3Header.h"
 #include "Mp3Id3Tag2.h"
+#include "PhysicalFrame.h"
 
 using namespace std;
 
@@ -70,7 +72,21 @@ int bitrates[] = {
 //	char    genre  : 8 ;    //127  1  Genre
 //} Mp3Id3Tag2;
 
-int readMP3header(FILE *f, Mp3Header *h){
+bool framesyncOn(unsigned char c[2]){
+	int a,b;
+	a = ((int) c[0]) << 8;
+	b = ((int) c[1]);
+
+	int r = ( a | b) & FRAMESYNC_MASK;
+
+	//cout << "framesync " << r << " ?= " << FRAMESYNC_MASK << endl;
+
+	return r == FRAMESYNC_MASK;
+}
+
+vector<PhysicalFrame*> readMP3File(FILE *f){
+	cout << "Starting to read physical frames!" << endl;
+
 	Mp3Id3Tag2Data tag_data;
 
 	//push file point to the beginning
@@ -87,56 +103,96 @@ int readMP3header(FILE *f, Mp3Header *h){
 		rewind(f);
 	}
 
-//	unsigned char* data = new unsigned char[30];
-//
-//	fread(data, 1, 30, f);
-//
-//	cout << "data: ";
-//	for(int i=0 ; i<30 ; i++)
-//		cout << (int)data[i] << " ";
-//	cout << endl;
-//
-//	delete [] data;
+	vector<PhysicalFrame*> frames;
+	Mp3HeaderData header_data;
 
+	bool reading = true;
+	do{
+		//read a frame header
+		if(fread(&header_data, 1, sizeof(header_data), f) <1 ){//returns -1 if eof
+			break;
+		}
 
-//	//I'm currently not interested in the final state of the file pointer
-//	do{//read a frame header
-//		if(fread(h, 1, sizeof(Mp3Header), f)<1){//returns -1 if eof
-//			return 0;
-//		}
-//		cout << (h->framesync & 0b11111111111) << " =? " << 0b11111111111 << endl;
-//		fseek(f, 1-sizeof(Mp3Header), SEEK_CUR);
-//	//verifies if the framesync bytes are wellset - if not no frame header was read: go to next file byte
-//	}while((h->framesync & 0b11111111111) == 0b11111111111);
+		//init the header
+		Mp3Header* h = new Mp3Header(header_data);
 
-	return 1;
+		//init the physical frame
+		PhysicalFrame* frame = new PhysicalFrame(h);
+
+		//move past the current header
+		fseek(f, sizeof(header_data), SEEK_CUR);
+
+		//read till another header is found
+		vector<unsigned char> past_data;
+		unsigned char curr_data[2];
+
+		//initial read of two bytes
+		if(fread(curr_data, 1, sizeof(curr_data), f) <1 )//returns -1 if eof
+			break;
+
+		//till it finds another header or reaches the end of file
+		while( !framesyncOn(curr_data) ){
+			//push first byte to past_data since it isn't header data
+			past_data.push_back(curr_data[0]);
+
+			//back up one byte
+			fseek(f, -1, SEEK_CUR);
+			//read next two bytes
+			if(fread(curr_data, 1, sizeof(curr_data), f) <1 ){//returns -1 if eof
+				reading = false;
+				break;
+			}
+			//move forward two bytes
+			fseek(f, 2, SEEK_CUR);
+		}
+
+		//push data to header
+		frame->setData(past_data);
+		frames.push_back(frame);
+
+		//back up two bytes so that the whole header can correctly be read
+		fseek(f, -2, SEEK_CUR);
+	}while( reading );
+
+	cout << "Finished reading physical frames!" << endl;
+
+	return frames;
 }
 
-int MP3bitrate(Mp3Header h){
+int MP3bitrate(Mp3Header* h){
 	int index=0;
-	if( (0x03&h.mpegid)==MPEGVersion1 ){
-		index = 3-h.layer;
-	}else if( (0x03&h.mpegid)==MPEGVersion2 || (0x03&h.mpegid)==MPEGVersion2_5 ){
-		index = (0x03&h.layer) == LAYER1 ? 3 :4 ;
+	if( (h->mpegid)==MPEGVersion1 ){
+		index = 3-h->layer;
+	}else if( (h->mpegid)==MPEGVersion2 || (h->mpegid)==MPEGVersion2_5 ){
+		index = (h->layer) == LAYER1 ? 3 :4 ;
 	}
-	return bitrates[ index + (0x0f&h.bitrateindx) * 5];
+	return bitrates[ index + (h->bitrateindx) * 5];
 }
 
 int main() {
 	cout << "starting!" << endl;
 
 	FILE *f;
-	Mp3Header h;
 
 	f = fopen("resources/Tenebrous.mp3", "rb");
 
-	if(readMP3header(f, &h))
-        printf("MPEGID: %d\nLAYER: %d\nBITIND: %d\nBITRATE: %d\n", 0x03&h.mpegid, 0x03&h.layer, 0x0f&h.bitrateindx , MP3bitrate(h));
-    else
+	vector<PhysicalFrame*> frames = readMP3File(f);
+
+	if(frames.size() > 0){
+		printf("MPEGID: %d\nLAYER: %d\nBITIND: %d\nBITRATE: %d\n", frames[0]->header->mpegid, frames[0]->header->layer, frames[0]->header->bitrateindx , MP3bitrate(frames[0]->header));
+		cout << endl;
+		printf("MPEGID: %d\nLAYER: %d\nBITIND: %d\nBITRATE: %d\n", frames[1]->header->mpegid, frames[1]->header->layer, frames[1]->header->bitrateindx , MP3bitrate(frames[1]->header));
+		cout << endl;
+		printf("MPEGID: %d\nLAYER: %d\nBITIND: %d\nBITRATE: %d\n", frames[2]->header->mpegid, frames[2]->header->layer, frames[2]->header->bitrateindx , MP3bitrate(frames[2]->header));
+	}else{
         printf("no, header not found.");
+	}
 
-	cout << "done!" << endl;
+	cout << "stopping!" << endl;
 
+	for (unsigned int i=0 ; i<frames.size() ; i++){
+		delete frames[i];
+	}
 	delete f;
 
 	return 0;

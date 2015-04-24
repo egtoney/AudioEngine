@@ -20,7 +20,7 @@ typedef struct{
 
 
 typedef struct{
-	char data[10];
+	unsigned char data[10];
 } Mp3Id3Tag2Data;
 
 class Mp3Id3Tag2{
