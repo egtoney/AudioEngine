@@ -5,7 +5,7 @@
  *      Author: ethan
  */
 
-#include "../Mp3Lib/Mp3Id3Tag2.h"
+#include "../Id3/Mp3Id3Tag2.h"
 
 using namespace std;
 

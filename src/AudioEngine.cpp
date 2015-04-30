@@ -11,9 +11,9 @@
 #include <stdio.h>
 #include <vector>
 
-#include "Mp3Lib/Mp3Header.h"
-#include "Mp3Lib/Mp3Id3Tag2.h"
-#include "Mp3Lib/PhysicalFrame.h"
+#include "Mp3Lib/FrameHeaders/Mp3Header.h"
+#include "Mp3Lib/Id3/Mp3Id3Tag2.h"
+#include "Mp3Lib/FrameData/PhysicalFrame.h"
 
 using namespace std;
 
@@ -24,6 +24,8 @@ using namespace std;
  * 		http://cboard.cprogramming.com/c-programming/54179-reading-mp3-header.html
  * 		http://id3.org/id3v2.3.0
  * 		http://www.datavoyage.com/mpgscript/mpeghdr.htm
+ * 		http://www.mp3-tech.org/programmer/docs/mp3_theory.pdf
+ * 		http://sea-mist.se/fou/cuppsats.nsf/all/857e49b9bfa2d753c125722700157b97/$file/Thesis%20report-%20MP3%20Decoder.pdf
  *
  * Read physical frames...
  * 		look for, FF FB 78 64

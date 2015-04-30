@@ -10,7 +10,7 @@
 #include <vector>
 #include <string.h>
 
-#include "../Mp3Lib/Mp3Header.h"
+#include "../FrameHeaders/Mp3Header.h"
 
 using namespace std;
 
@@ -21,7 +21,7 @@ PhysicalFrame::PhysicalFrame() {
 	side_info = NULL;
 }
 
-PhysicalFrame::PhysicalFrame(Mp3Header* head, Mp3SideInfo side) {
+PhysicalFrame::PhysicalFrame(Mp3Header* head, Mp3SideInfo* side) {
 	frame_size = 0;
 	data = NULL;
 	header = head;

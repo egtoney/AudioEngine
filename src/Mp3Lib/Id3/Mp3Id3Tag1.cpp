@@ -5,7 +5,7 @@
  *      Author: ethan
  */
 
-#include "../Mp3Lib/Mp3Id3Tag1.h"
+#include "../Id3/Mp3Id3Tag1.h"
 
 Mp3Id3Tag1::Mp3Id3Tag1() {
 	// TODO Auto-generated constructor stub
